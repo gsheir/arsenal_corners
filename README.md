@@ -6,6 +6,8 @@ I use the following corner zones for data collection:
 
 ![](./images/corner_zones.png)
 
+I have initially classified the corners into 4 groups: left vs right and front vs back post. However, the subsequent work will inform whether these groupings are right or not. 
+
 We can plot the frequency of where corners are targeted at:
 
 ![](./images/left_right_heatmaps.png)
