@@ -2,14 +2,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from clustering import (cluster_corner_kmeans, get_centroid_as_corner_paths,
-                        get_centroids, perform_pca)
-from plotting_tools import (plot_corner_heatmap, plot_corner_paths,
-                            plot_corner_zones, plot_multiple_corner_paths,
-                            plot_start_end_heatmaps)
+from clustering import (
+    cluster_corner_kmeans,
+    get_centroid_as_corner_paths,
+    get_centroids,
+    perform_pca,
+)
+from plotting_tools import (
+    plot_corner_heatmap,
+    plot_corner_paths,
+    plot_corner_zones,
+    plot_multiple_corner_paths,
+    plot_start_end_heatmaps,
+)
 from settings import ALL_ZONES, CORNER_ZONES, OUT_CORNER_ZONES, OUTPUT_DIR
-from utils import (calculate_play_quality, convert_zones_to_xy,
-                   mirror_right_corners)
+from utils import calculate_play_quality, convert_zones_to_xy, mirror_right_corners
 
 
 def create_corner_zone_plot():
@@ -103,6 +110,8 @@ def run_clustering(corners, players):
     # )
     player_paths = player_paths.groupby("Corner ID").filter(lambda x: len(x) == 5)
 
+    # We need to convert into a corner-oriented table, i.e. one row per corner.
+    # We will end up with a wide table where there will be a set of columns for each player involved.
     player_paths["player_num"] = player_paths.groupby("Corner ID").cumcount() + 1
 
     corners_with_paths = player_paths.pivot(
