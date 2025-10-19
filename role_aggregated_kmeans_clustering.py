@@ -178,7 +178,7 @@ class RoleAggregatedKMeansClustering:
 
         self.centroids_df = pd.DataFrame(centroid_data)
 
-    def get_centroid_as_corner_paths(self):
+    def get_reconstructed_paths_from_centroids(self):
         """
         Convert cluster centroids back to individual player path format
         for visualization purposes
@@ -246,7 +246,7 @@ class RoleAggregatedKMeansClustering:
                         }
                         reconstructed_paths.append(path)
 
-        return pd.DataFrame(reconstructed_paths)
+        self.reconstructed_paths = pd.DataFrame(reconstructed_paths)
 
     def perform_pca(self, n_components=2):
         """Perform PCA for visualization"""
@@ -259,6 +259,7 @@ class RoleAggregatedKMeansClustering:
         self.create_clustering_df()
         self.cluster_corner_kmeans()
         self.get_centroids()
+        self.get_reconstructed_paths_from_centroids()
         self.perform_pca()
 
     def get_feature_importance(self):

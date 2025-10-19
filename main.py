@@ -1,13 +1,16 @@
 import os
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
-from clustering import RoleAggregatedKMeansClustering
+from corner_similarity_clustering import CornerSimilarityClustering
+from kmeans_clustering import KMeansClustering
 from plotting_tools import (plot_corner_heatmap, plot_corner_paths,
                             plot_corner_zones, plot_k_means_results,
                             plot_multiple_corner_paths,
                             plot_start_end_heatmaps)
+from role_aggregated_kmeans_clustering import RoleAggregatedKMeansClustering
 from settings import ALL_ZONES, CORNER_ZONES, OUT_CORNER_ZONES, OUTPUT_DIR
 from utils import (add_play_quality_to_players, convert_zones_to_xy,
                    mirror_right_corners)
@@ -96,14 +99,16 @@ def run_clustering(corners, players):
     player_paths = player_paths.drop(
         columns=["ID", "Side", "Start location", "End location"]
     )
+    player_paths = player_paths[player_paths["Role"] != "Mop up"]
 
     # Clustering run: All roles included except mop up
     print("Clustering with all roles (except mop up)...")
-    player_paths = player_paths[player_paths["Role"] != "Mop up"]
-    player_paths = player_paths.groupby("Corner ID").filter(lambda x: len(x) == 5)
+    player_paths_all_roles = player_paths.copy()
 
     n_clusters = 5
-    clustering = RoleAggregatedKMeansClustering(player_paths, n_clusters=n_clusters)
+    clustering = RoleAggregatedKMeansClustering(
+        player_paths_all_roles, n_clusters=n_clusters
+    )
     clustering.run()
     plot_k_means_results(clustering, players, filename_prefix="all_roles_")
 
@@ -116,25 +121,38 @@ def run_clustering(corners, players):
     player_paths_shot_only.loc[
         player_paths_shot_only["Role"] != "Shot target", "Role"
     ] = "Other"
+    player_paths_shot_only = player_paths_shot_only.groupby("Corner ID").filter(
+        lambda x: len(x) == 5
+    )
 
     n_clusters = 4
-    clustering = RoleAggregatedKMeansClustering(
-        player_paths_shot_only, n_clusters=n_clusters
-    )
+    clustering = KMeansClustering(player_paths_shot_only, n_clusters=n_clusters)
     clustering.run()
-    plot_k_means_results(clustering, players, filename_prefix="shot_target_")
+    plot_k_means_results(clustering, players, filename_prefix="shot_target_aware_")
 
     # Clustering run: No roles
     print("Clustering with no roles...")
     player_paths_no_roles = player_paths.copy()
     player_paths_no_roles["Role"] = "Player"
+    player_paths_no_roles = player_paths_no_roles.groupby("Corner ID").filter(
+        lambda x: len(x) == 5
+    )
 
     n_clusters = 3
-    clustering = RoleAggregatedKMeansClustering(
-        player_paths_no_roles, n_clusters=n_clusters
-    )
+    clustering = KMeansClustering(player_paths_no_roles, n_clusters=n_clusters)
     clustering.run()
     plot_k_means_results(clustering, players, filename_prefix="no_roles_")
+
+
+def run_similarity_clustering(corners, players):
+    """Run similarity-based clustering analysis on corners."""
+    print("Running similarity-based clustering analysis...")
+
+    # Create and run the similarity clustering
+    similarity_clustering = CornerSimilarityClustering(corners, players)
+    results = similarity_clustering.run_complete_analysis()
+
+    return results
 
 
 def run_analysis():
@@ -169,6 +187,9 @@ def run_analysis():
     create_plots(corners, players)
 
     run_clustering(corners, players)
+
+    # Run similarity-based clustering
+    # run_similarity_clustering(corners, players)
 
     print("Done.")
 

@@ -5,7 +5,7 @@ import pandas as pd
 from matplotlib.colors import Normalize
 from matplotlib.patches import Patch
 
-from clustering import RoleAggregatedKMeansClustering
+from role_aggregated_kmeans_clustering import RoleAggregatedKMeansClustering
 from settings import OUTPUT_DIR
 from utils import (get_mean_play_quality_for_corner_ids,
                    get_start_and_end_counts)
@@ -304,7 +304,7 @@ def plot_k_means_results(
 
     for cluster_id in range(k_means.n_clusters):
         # Get reconstructed paths for this cluster
-        all_reconstructed = k_means.get_centroid_as_corner_paths()
+        all_reconstructed = k_means.reconstructed_paths
         cluster_paths = all_reconstructed[all_reconstructed["Cluster"] == cluster_id]
 
         # Get the corner IDs that belong to this cluster
@@ -314,7 +314,7 @@ def plot_k_means_results(
 
         plot_corner_paths(
             cluster_paths,
-            title=f"Cluster {cluster_id} Centroid (Role Aggregated)",
+            title=f"Cluster {cluster_id} Centroid",
             ax=ax[cluster_id],
             legend=(cluster_id == 0),  # Only show legend on first plot
         )
