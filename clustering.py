@@ -79,8 +79,76 @@ def get_centroid_as_corner_paths(centroid, centroids_df):
     return paths
 
 
-def perform_pca(X, n_components=2):
+def perform_kmeans(player_paths, n_clusters=3):
+    # We need to convert into a corner-oriented table, i.e. one row per corner.
+    # We will end up with a wide table where there will be a set of columns for each player involved.
+    player_paths["player_num"] = player_paths.groupby("Corner ID").cumcount() + 1
 
+    corners_with_paths = player_paths.pivot(
+        index="Corner ID",
+        columns="player_num",
+        values=["start_x", "start_y", "end_x", "end_y", "Role"],
+    )
+
+    # Flatten the multi-index columns for easier manipulation
+    corners_flat = corners_with_paths.copy()
+    corners_flat.columns = ["_".join(map(str, col)) for col in corners_flat.columns]
+
+    # Reconstruct player data for each corner
+    corners_sorted = []
+
+    for corner_id in corners_with_paths.index:
+        # Extract all player data for this corner
+        players_data = []
+        for i in range(1, 6):
+            player = {
+                "start_x": corners_with_paths.loc[corner_id, ("start_x", i)],
+                "start_y": corners_with_paths.loc[corner_id, ("start_y", i)],
+                "end_x": corners_with_paths.loc[corner_id, ("end_x", i)],
+                "end_y": corners_with_paths.loc[corner_id, ("end_y", i)],
+                "Role": corners_with_paths.loc[corner_id, ("Role", i)],
+            }
+            players_data.append(player)
+
+        # Sort players by role, then start_x, then start_y
+        players_data_sorted = sorted(
+            players_data, key=lambda x: (x["Role"], x["start_x"], x["start_y"])
+        )
+
+        # Flatten sorted data into a single row
+        row = {"Corner ID": corner_id}
+        for i, player in enumerate(players_data_sorted, 1):
+            row[f"start_x_{i}"] = player["start_x"]
+            row[f"start_y_{i}"] = player["start_y"]
+            row[f"end_x_{i}"] = player["end_x"]
+            row[f"end_y_{i}"] = player["end_y"]
+            row[f"Role_{i}"] = player["Role"]
+
+        corners_sorted.append(row)
+
+    corners_normalised = pd.DataFrame(corners_sorted).set_index("Corner ID")
+    corners_normalised = corners_normalised.dropna()
+
+    n_clusters = 4
+    kmeans, scaler, numeric_cols, role_dummies, X_scaled = cluster_corner_kmeans(
+        corners_normalised, n_clusters=n_clusters
+    )
+    centroids_df = get_centroids(kmeans, scaler, numeric_cols, role_dummies)
+
+    X_pca, pca = perform_pca(X_scaled, n_components=2)
+
+    centroids_pca = pca.transform(kmeans.cluster_centers_)
+
+    return {
+        "n_clusters": n_clusters,
+        "corners_normalised": corners_normalised,
+        "centroids_df": centroids_df,
+        "X_pca": X_pca,
+        "centroids_pca": centroids_pca,
+    }
+
+
+def perform_pca(X, n_components=2):
     pca = PCA(n_components=n_components)
     X_pca = pca.fit_transform(X)
     return X_pca, pca

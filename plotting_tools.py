@@ -1,10 +1,15 @@
 import matplotlib.pyplot as plt
 import mplsoccer
+import numpy as np
+import pandas as pd
 from matplotlib.colors import Normalize
 from matplotlib.patches import Patch
 
+from clustering import get_centroid_as_corner_paths
+from settings import OUTPUT_DIR
 from utils import get_start_and_end_counts
 
+plt.ioff()
 
 def plot_corner_zones(corner_zones, out_corner_zones, ax=None, out_file=None):
     # Define and plot corner zones
@@ -273,3 +278,110 @@ def plot_multiple_corner_paths(
 
         if out_file_prefix:
             plt.savefig(f"{out_file_prefix}_page_{page + 1}.png")
+
+
+def plot_k_means_results(k_means_results, out_dir=OUTPUT_DIR, filename_prefix=""):
+    # Plot centroid paths
+
+    out_file = f"{out_dir}/{filename_prefix}clustered_corner_paths.png"
+    fig, ax = plt.subplots(
+        nrows=k_means_results["n_clusters"],
+        ncols=1,
+        figsize=(10, 5 * k_means_results["n_clusters"]),
+        constrained_layout=True,
+    )
+    for idx, centroid in k_means_results["centroids_df"].iterrows():
+        paths = get_centroid_as_corner_paths(centroid, k_means_results["centroids_df"])
+
+        # Get the corner IDs that belong to this cluster
+        cluster_corners = k_means_results["corners_normalised"][
+            k_means_results["corners_normalised"]["Cluster"] == centroid["Cluster"]
+        ]
+        paths_df = pd.DataFrame(paths)
+        plot_corner_paths(
+            paths_df, title=f"Cluster {int(centroid['Cluster'])} Centroid", ax=ax[idx]
+        )
+        # List corner IDs in this cluster
+        corner_ids = cluster_corners.index.tolist()
+        ax[idx].text(
+            0.5,
+            -0.1,
+            f"Corner IDs: {corner_ids}",
+            transform=ax[idx].transAxes,
+            ha="center",
+            va="top",
+            fontsize=8,
+        )
+
+    plt.savefig(out_file)
+
+    # Plot PCA scatter
+    out_file = f"{OUTPUT_DIR}/{filename_prefix}corner_clusters_pca.png"
+    plt.figure(figsize=(8, 6))
+    for i in range(k_means_results["n_clusters"]):
+        plt.scatter(
+            k_means_results["X_pca"][
+                k_means_results["corners_normalised"]["Cluster"] == i, 0
+            ],
+            k_means_results["X_pca"][
+                k_means_results["corners_normalised"]["Cluster"] == i, 1
+            ],
+            label=f"Cluster {i}",
+        )
+
+    # Plot centroids
+    plt.scatter(
+        k_means_results["centroids_pca"][:, 0],
+        k_means_results["centroids_pca"][:, 1],
+        s=50,
+        c="black",
+        marker="X",
+        label="Centroids",
+    )
+
+    # Add labels for each data point
+    for i, corner_id in enumerate(k_means_results["corners_normalised"].index):
+        plt.text(
+            k_means_results["X_pca"][i, 0],
+            k_means_results["X_pca"][i, 1],
+            str(corner_id),
+            fontsize=8,
+        )
+
+    plt.title("PCA of Corner Clusters")
+    plt.xlabel("PCA Component 1")
+    plt.ylabel("PCA Component 2")
+    plt.legend()
+    plt.savefig(out_file)
+
+    # Plot play diagrams per cluster
+    out_file_prefix = f"{OUTPUT_DIR}/clustered_corners"
+    for cluster_id in range(k_means_results["n_clusters"]):
+        corners_in_cluster = k_means_results["corners_normalised"][
+            k_means_results["corners_normalised"]["Cluster"] == cluster_id
+        ]
+
+        nrows = int(np.ceil(len(corners_in_cluster) / 4))
+        fig, axs = plt.subplots(
+            nrows, 4, figsize=(16, 4 * nrows), constrained_layout=True
+        )
+        axs = axs.flatten()
+
+        for idx, corner_id in enumerate(corners_in_cluster.index):
+            corner_paths = corners_in_cluster.loc[corner_id]
+            paths = []
+            for i in range(1, 6):
+                path = {
+                    "start_x": corner_paths[f"start_x_{i}"],
+                    "start_y": corner_paths[f"start_y_{i}"],
+                    "end_x": corner_paths[f"end_x_{i}"],
+                    "end_y": corner_paths[f"end_y_{i}"],
+                    "Role": corner_paths[f"Role_{i}"],
+                }
+                paths.append(path)
+            paths_df = pd.DataFrame(paths)
+            fig = plot_corner_paths(
+                paths_df, title=f"Corner ID {corner_id}", ax=axs[idx], legend=False
+            )
+        plt.suptitle(f"Cluster {cluster_id} Corners", fontsize=16)
+        plt.savefig(f"{out_file_prefix}_cluster_{cluster_id}.png")
