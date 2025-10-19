@@ -129,7 +129,6 @@ def perform_kmeans(player_paths, n_clusters=3):
     corners_normalised = pd.DataFrame(corners_sorted).set_index("Corner ID")
     corners_normalised = corners_normalised.dropna()
 
-    n_clusters = 4
     kmeans, scaler, numeric_cols, role_dummies, X_scaled = cluster_corner_kmeans(
         corners_normalised, n_clusters=n_clusters
     )

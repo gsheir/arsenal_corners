@@ -11,6 +11,7 @@ from utils import get_start_and_end_counts
 
 plt.ioff()
 
+
 def plot_corner_zones(corner_zones, out_corner_zones, ax=None, out_file=None):
     # Define and plot corner zones
     if ax is None:
@@ -231,7 +232,7 @@ def plot_corner_paths(
             head_width=1,
             head_length=1,
             length_includes_head=True,
-            color=role_colours.get(row["Role"], "blue"),
+            color=role_colours.get(row["Role"], "grey"),
             alpha=0.7,
         )
 
@@ -355,7 +356,7 @@ def plot_k_means_results(k_means_results, out_dir=OUTPUT_DIR, filename_prefix=""
     plt.savefig(out_file)
 
     # Plot play diagrams per cluster
-    out_file_prefix = f"{OUTPUT_DIR}/clustered_corners"
+    out_file_prefix = "clustered_corners"
     for cluster_id in range(k_means_results["n_clusters"]):
         corners_in_cluster = k_means_results["corners_normalised"][
             k_means_results["corners_normalised"]["Cluster"] == cluster_id
@@ -383,5 +384,12 @@ def plot_k_means_results(k_means_results, out_dir=OUTPUT_DIR, filename_prefix=""
             fig = plot_corner_paths(
                 paths_df, title=f"Corner ID {corner_id}", ax=axs[idx], legend=False
             )
+
+            # Hide any unused subplots
+            for j in range(idx + 1, len(axs)):
+                axs[j].axis("off")
+
         plt.suptitle(f"Cluster {cluster_id} Corners", fontsize=16)
-        plt.savefig(f"{out_file_prefix}_cluster_{cluster_id}.png")
+        plt.savefig(
+            f"{OUTPUT_DIR}/{filename_prefix}{out_file_prefix}_cluster_{cluster_id}.png"
+        )

@@ -23,11 +23,11 @@ I defined roles for each player at each corner:
 |Role name	|Description|
 |-|-|
 |Shot target|	A first receiver that is intended to take a shot|
-|Pass target|	A first receiver that is intended to pass the |ball (e.g. flick on, head back across goal)
-|Second target|	A second receiver that is intended to take a |shot
-|Blocker	|A player who is deliberately blocking an opponent |from reaching an area
-|Decoy	|A player who isn’t aiming to win the ball, only to |occupy a defender
-|Mop up	|A player who is waiting for a breakaway or loose ball |away from the congested areas
+|Pass target|	A first receiver that is intended to pass the ball (e.g. flick on, head back across goal) |
+|Second target|	A second receiver that is intended to take a shot |
+|Blocker	|A player who is deliberately blocking an opponent from reaching an area |
+|Decoy	|A player who isn’t aiming to win the ball, only to occupy a defender |
+|Mop up	|A player who is waiting for a breakaway or loose ball away from the congested areas |
 
 Because I have collected the start and end locations of every player, we can plot a play diagram for each corner. 
 
@@ -43,11 +43,11 @@ We assume the corners can be mirrored, so we convert all right sided corners to 
 
 The cluster centroids are shown below, showing the "average" play for that cluster:
 
-![](./images/clustered_corner_paths.png)
+![](./images/all_roles_clustered_corner_paths.png)
 
 We can plot the corners in PCA space to try and visualise the clusters:
 
-![](./images/corner_clusters_pca.png)
+![](./images/all_roles_corner_clusters_pca.png)
 
 It can be difficult to get the clusters to be exactly right but using this is a good tool to get an initial idea of the data, without having to watch through every video and group them ourselves. 
 
@@ -101,3 +101,34 @@ Mean Player Play Quality:
 7           Katie Reid           0.232500
 2        Caitlin Foord           0.218438
 ```
+
+# All play diagram plots
+![](./images/corner_paths_page_1.png)
+![](./images/corner_paths_page_2.png)
+![](./images/corner_paths_page_3.png)
+
+# All clustering plots
+
+## Clustering with all roles aware
+![](./images/all_roles_clustered_corner_paths.png)
+![](./images/all_roles_clustered_corners_cluster_0.png)
+![](./images/all_roles_clustered_corners_cluster_1.png)
+![](./images/all_roles_clustered_corners_cluster_2.png)
+![](./images/all_roles_clustered_corners_cluster_3.png)
+![](./images/all_roles_corner_clusters_pca.png)
+
+## Clustering with just shot target (pass targets included)
+![](./images/shot_target_clustered_corner_paths.png)
+![](./images/shot_target_clustered_corners_cluster_0.png)
+![](./images/shot_target_clustered_corners_cluster_1.png)
+![](./images/shot_target_clustered_corners_cluster_2.png)
+![](./images/shot_target_clustered_corners_cluster_3.png)
+![](./images/shot_target_corner_clusters_pca.png)
+
+## Clustering with no roles
+![](./images/no_roles_clustered_corner_paths.png)
+![](./images/no_roles_clustered_corners_cluster_0.png)
+![](./images/no_roles_clustered_corners_cluster_1.png)
+![](./images/no_roles_clustered_corners_cluster_2.png)
+![](./images/no_roles_corner_clusters_pca.png)
+
