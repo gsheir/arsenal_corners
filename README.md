@@ -115,6 +115,7 @@ Mean Player Play Quality:
 ![](./images/all_roles_clustered_corners_cluster_1.png)
 ![](./images/all_roles_clustered_corners_cluster_2.png)
 ![](./images/all_roles_clustered_corners_cluster_3.png)
+![](./images/all_roles_clustered_corners_cluster_4.png)
 ![](./images/all_roles_corner_clusters_pca.png)
 
 ## Clustering with just shot target (pass targets included)

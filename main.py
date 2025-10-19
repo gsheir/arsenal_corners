@@ -3,14 +3,13 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from clustering import (cluster_corner_kmeans, get_centroid_as_corner_paths,
-                        get_centroids, perform_kmeans, perform_pca)
+from clustering import RoleAggregatedKMeansClustering
 from plotting_tools import (plot_corner_heatmap, plot_corner_paths,
                             plot_corner_zones, plot_k_means_results,
                             plot_multiple_corner_paths,
                             plot_start_end_heatmaps)
 from settings import ALL_ZONES, CORNER_ZONES, OUT_CORNER_ZONES, OUTPUT_DIR
-from utils import (calculate_play_quality, convert_zones_to_xy,
+from utils import (add_play_quality_to_players, convert_zones_to_xy,
                    mirror_right_corners)
 
 
@@ -103,9 +102,10 @@ def run_clustering(corners, players):
     player_paths = player_paths[player_paths["Role"] != "Mop up"]
     player_paths = player_paths.groupby("Corner ID").filter(lambda x: len(x) == 5)
 
-    n_clusters = 4
-    k_means_results = perform_kmeans(player_paths, n_clusters=n_clusters)
-    plot_k_means_results(k_means_results, filename_prefix="all_roles_")
+    n_clusters = 5
+    clustering = RoleAggregatedKMeansClustering(player_paths, n_clusters=n_clusters)
+    clustering.run()
+    plot_k_means_results(clustering, players, filename_prefix="all_roles_")
 
     # Clustering run: Shot target labelled only but pass targets are shot targets
     print("Clustering with shot target labelled only...")
@@ -118,8 +118,11 @@ def run_clustering(corners, players):
     ] = "Other"
 
     n_clusters = 4
-    k_means_results = perform_kmeans(player_paths_shot_only, n_clusters=n_clusters)
-    plot_k_means_results(k_means_results, filename_prefix="shot_target_")
+    clustering = RoleAggregatedKMeansClustering(
+        player_paths_shot_only, n_clusters=n_clusters
+    )
+    clustering.run()
+    plot_k_means_results(clustering, players, filename_prefix="shot_target_")
 
     # Clustering run: No roles
     print("Clustering with no roles...")
@@ -127,33 +130,11 @@ def run_clustering(corners, players):
     player_paths_no_roles["Role"] = "Player"
 
     n_clusters = 3
-    k_means_results = perform_kmeans(player_paths_no_roles, n_clusters=n_clusters)
-    plot_k_means_results(k_means_results, filename_prefix="no_roles_")
-
-
-def run_play_quality_analysis(players):
-    print("Running play quality analysis...")
-    players = calculate_play_quality(players)
-
-    corner_play_quality = (
-        players.groupby("Corner ID")["Play quality"]
-        .sum()
-        .reset_index(name="Play quality")
-        .sort_values(by="Play quality", ascending=False)
+    clustering = RoleAggregatedKMeansClustering(
+        player_paths_no_roles, n_clusters=n_clusters
     )
-
-    print("Corner Play Quality:")
-    print(corner_play_quality)
-
-    mean_player_play_quality = (
-        players.groupby("Player name")["Play quality"]
-        .mean()
-        .reset_index(name="Mean play quality")
-        .sort_values(by="Mean play quality", ascending=False)
-    )
-
-    print("Mean Player Play Quality:")
-    print(mean_player_play_quality)
+    clustering.run()
+    plot_k_means_results(clustering, players, filename_prefix="no_roles_")
 
 
 def run_analysis():
@@ -183,12 +164,11 @@ def run_analysis():
     )
     players = convert_zones_to_xy(players, "End location", "end_x", "end_y", ALL_ZONES)
     players = mirror_right_corners(players, start_x_col="start_x", end_x_col="end_x")
+    players = add_play_quality_to_players(players)
 
     create_plots(corners, players)
 
     run_clustering(corners, players)
-
-    run_play_quality_analysis(players)
 
     print("Done.")
 
