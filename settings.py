@@ -83,10 +83,10 @@ MARKING = {
 
 # Role importance hierarchy for similarity clustering
 ROLE_WEIGHTS = {
-    "Shot target": 1.0,  # Highest importance
-    "Pass target": 0.8,  # High importance
-    "Second target": 0.6,  # Medium-high importance
-    "Decoy": 0.4,  # Medium importance
-    "Blocker": 0.3,  # Low-medium importance
-    "Mop up": 0.1,  # Lowest importance
+    "Shot target": 1.0,
+    "Pass target": 0.8,
+    "Second target": 0.6,
+    "Decoy": 0.8,
+    "Blocker": 0.6,
+    "Mop up": 0.01,
 }

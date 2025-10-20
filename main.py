@@ -13,7 +13,7 @@ from plotting_tools import (plot_corner_heatmap, plot_corner_paths,
 from role_aggregated_kmeans_clustering import RoleAggregatedKMeansClustering
 from settings import ALL_ZONES, CORNER_ZONES, OUT_CORNER_ZONES, OUTPUT_DIR
 from utils import (add_play_quality_to_players, convert_zones_to_xy,
-                   mirror_right_corners)
+                   get_mean_play_quality_for_corner_ids, mirror_right_corners)
 
 
 def create_corner_zone_plot():
@@ -69,11 +69,29 @@ def create_all_corner_paths_plot(corners, players):
     plot_multiple_corner_paths(corners["ID"], players, out_file_prefix=out_file_prefix)
 
 
+def create_hand_clustered_corner_paths_plot(corners, players):
+    print("Creating hand-clustered corner paths plot...")
+    for group in corners["Group"].unique():
+        clustered_corner_ids = corners[corners["Group"] == group]["ID"].tolist()
+
+        out_file_prefix = f"{OUTPUT_DIR}/hand_clustered_corner_paths_{group.replace(' ', '_').lower()}.png"
+        mean_play_quality = get_mean_play_quality_for_corner_ids(
+            players, clustered_corner_ids
+        )
+        plot_multiple_corner_paths(
+            clustered_corner_ids,
+            players,
+            out_file_prefix=out_file_prefix,
+            title=f"Corner paths - {group} (Mean Play Quality: {mean_play_quality:.3f})",
+        )
+
+
 def create_plots(corners, players):
     create_corner_zone_plot()
     create_left_right_heatmaps(corners)
     create_start_end_heatmaps(players)
     create_all_corner_paths_plot(corners, players)
+    create_hand_clustered_corner_paths_plot(corners, players)
 
 
 def run_clustering(corners, players):
@@ -170,6 +188,8 @@ def run_analysis():
     corners = pd.read_csv("data/corners.csv")
     players = pd.read_csv("data/players.csv")
 
+    corners = corners[corners["Discard"] == "No"]
+
     players = pd.merge(
         left=players,
         right=corners[["Side", "ID"]].rename(columns={"ID": "Corner ID"}),
@@ -189,7 +209,7 @@ def run_analysis():
     run_clustering(corners, players)
 
     # Run similarity-based clustering
-    # run_similarity_clustering(corners, players)
+    run_similarity_clustering(corners, players)
 
     print("Done.")
 

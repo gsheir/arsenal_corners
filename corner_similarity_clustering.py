@@ -393,9 +393,9 @@ class CornerSimilarityClustering:
 
         return self.cluster_labels
 
-    def analyze_clusters(self) -> Dict:
+    def analyse_clusters(self) -> Dict:
         """
-        Analyze the clusters and provide explanations for similarity.
+        analyse the clusters and provide explanations for similarity.
 
         Returns:
             Dictionary with cluster analysis results
@@ -415,7 +415,7 @@ class CornerSimilarityClustering:
                 self.players["Corner ID"].isin(cluster_corner_ids)
             ].copy()
 
-            # Analyze role distribution
+            # analyse role distribution
             role_stats = (
                 cluster_players.groupby("Role")
                 .agg(
@@ -429,7 +429,7 @@ class CornerSimilarityClustering:
                 .round(2)
             )
 
-            # Analyze most common patterns for important roles
+            # analyse most common patterns for important roles
             important_roles = ["Shot target", "Pass target", "Second target"]
             role_patterns = {}
 
@@ -469,7 +469,7 @@ class CornerSimilarityClustering:
     def print_cluster_explanations(self):
         """Print human-readable explanations of why corners are clustered together."""
         if self.cluster_results is None:
-            raise ValueError("Must analyze clusters first!")
+            raise ValueError("Must analyse clusters first!")
 
         print("\n" + "=" * 80)
         print("CORNER CLUSTER ANALYSIS")
@@ -505,43 +505,6 @@ class CornerSimilarityClustering:
                 print(
                     "  • Primarily similar due to role composition and player count patterns"
                 )
-
-    def plot_similarity_matrix(self, figsize: Tuple[int, int] = (12, 10)):
-        """
-        Plot the similarity matrix as a heatmap.
-
-        Args:
-            figsize: Figure size tuple
-        """
-        if self.similarity_matrix is None:
-            raise ValueError("Must build similarity matrix first!")
-
-        plt.figure(figsize=figsize)
-
-        # Create heatmap
-        sns.heatmap(
-            self.similarity_matrix,
-            annot=False,
-            cmap="viridis",
-            vmin=0,
-            vmax=1,
-            square=True,
-            xticklabels=self.corner_ids,
-            yticklabels=self.corner_ids,
-        )
-
-        plt.title("Corner Similarity Matrix", fontsize=16)
-        plt.xlabel("Corner ID", fontsize=12)
-        plt.ylabel("Corner ID", fontsize=12)
-        plt.xticks(rotation=45)
-        plt.yticks(rotation=0)
-        plt.tight_layout()
-
-        # Save plot
-        plt.savefig(
-            f"{OUTPUT_DIR}/corner_similarity_matrix.png", dpi=300, bbox_inches="tight"
-        )
-        plt.show()
 
     def plot_clustered_matrix(self, figsize: Tuple[int, int] = (15, 6)):
         """
@@ -605,7 +568,6 @@ class CornerSimilarityClustering:
             dpi=300,
             bbox_inches="tight",
         )
-        plt.show()
 
     def run_complete_analysis(self, n_clusters: Optional[int] = None) -> Dict:
         """
@@ -625,11 +587,10 @@ class CornerSimilarityClustering:
         # Step 2: Perform clustering
         self.perform_clustering(n_clusters)
 
-        # Step 3: Analyze clusters
-        self.analyze_clusters()
+        # Step 3: analyse clusters
+        self.analyse_clusters()
 
         # Step 4: Create visualizations
-        self.plot_similarity_matrix()
         self.plot_clustered_matrix()
 
         # Step 5: Print explanations

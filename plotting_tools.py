@@ -251,7 +251,7 @@ def plot_corner_paths(
 
 
 def plot_multiple_corner_paths(
-    corner_ids, player_paths, axes=None, out_file_prefix=None
+    corner_ids, player_paths, axes=None, out_file_prefix=None, title=""
 ):
     n_cols = 4
     n_rows = 4
@@ -278,6 +278,7 @@ def plot_multiple_corner_paths(
         for j in range(i + 1, len(axes)):
             axes[j].axis("off")
 
+        plt.suptitle(title)
         if out_file_prefix:
             plt.savefig(f"{out_file_prefix}_page_{page + 1}.png")
 
