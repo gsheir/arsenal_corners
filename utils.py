@@ -39,8 +39,20 @@ def mirror_right_corners(player_paths, start_x_col="start_x", end_x_col="end_x")
     return player_paths
 
 
-def calculate_play_quality(players, roles=ROLES, marking=MARKING):
+def add_play_quality_to_players(players, roles=ROLES, marking=MARKING):
     players["Role score"] = players["Role"].map(roles)
     players["Marking score"] = players["Marking"].map(marking)
     players["Play quality"] = players["Role score"] * players["Marking score"]
     return players
+
+
+def get_mean_play_quality_for_corner_ids(
+    players, corner_ids, roles=ROLES, marking=MARKING
+):
+    group_players = players[players["Corner ID"].isin(corner_ids)]
+    group_players = add_play_quality_to_players(
+        group_players, roles=roles, marking=marking
+    )
+    mean_play_quality = group_players["Play quality"].mean()
+
+    return mean_play_quality

@@ -80,3 +80,13 @@ MARKING = {
     "Watched zonally": 0.3,
     "Front marked": 0.1,
 }
+
+# Role importance hierarchy for similarity clustering
+ROLE_WEIGHTS = {
+    "Shot target": 1.0,
+    "Pass target": 0.8,
+    "Second target": 0.6,
+    "Decoy": 0.8,
+    "Blocker": 0.6,
+    "Mop up": 0.01,
+}
