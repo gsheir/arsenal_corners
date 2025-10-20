@@ -45,6 +45,7 @@ CORNER_ZONES = pd.DataFrame(
     ]
 )
 
+
 OUT_CORNER_ZONES = pd.DataFrame(
     [
         {"zone": "Corner L out", "x0": 0, "x1": 18, "y0": 120, "y1": 123},
@@ -61,6 +62,31 @@ OUT_CORNER_ZONES = pd.DataFrame(
 )
 
 ALL_ZONES = pd.concat([CORNER_ZONES, OUT_CORNER_ZONES], ignore_index=True)
+
+MIRRORED_CORNER_ZONES = {
+    "Corner R": "Corner L",
+    "6R": "6L",
+    "12R": "12L",
+    "18R": "18L",
+    "Corner R out": "Corner L out",
+    "6R out": "6L out",
+    "12R out": "12L out",
+    "18R out": "18L out",
+    "Third R": "Third L",
+    "A6": "A1",
+    "A5": "A2",
+    "A4": "A3",
+    "B6": "B1",
+    "B5": "B2",
+    "B4": "B3",
+    "C6": "C1",
+    "C5": "C2",
+    "C4": "C3",
+    "D6": "D1",
+    "D5": "D2",
+    "D4": "D3",
+    "E5": "E1",
+}
 
 ROLES = {
     "Shot target": 1,

@@ -157,7 +157,7 @@ def plot_corner_heatmap(
             )
 
     ax.set_ylim(80, 125)
-    ax.set_title(title, color="black", pad=20)
+    ax.set_title(title, color="black", pad=20, fontsize=14)
 
     if out_file:
         plt.savefig(out_file)

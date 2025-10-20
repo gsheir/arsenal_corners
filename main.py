@@ -13,7 +13,9 @@ from plotting_tools import (plot_corner_heatmap, plot_corner_paths,
 from role_aggregated_kmeans_clustering import RoleAggregatedKMeansClustering
 from settings import ALL_ZONES, CORNER_ZONES, OUT_CORNER_ZONES, OUTPUT_DIR
 from utils import (add_play_quality_to_players, convert_zones_to_xy,
-                   get_mean_play_quality_for_corner_ids, mirror_right_corners)
+                   get_mean_play_quality_for_corner_ids,
+                   mirror_right_corners_for_corners,
+                   mirror_right_corners_for_players)
 
 
 def create_corner_zone_plot():
@@ -63,6 +65,48 @@ def create_start_end_heatmaps(players):
         fig = plot_start_end_heatmaps(players, group, ALL_ZONES, out_file=out_file)
 
 
+def create_left_front_post_delivery_vs_run_heatmap(corners, players):
+    print("Creating left front post delivery vs run heatmap...")
+    group_corners = corners[
+        corners["Group"].isin(
+            ["Front post multiple shot targets", "Front post single shot target"]
+        )
+    ]
+    corner_players = players[
+        players["Group"].isin(
+            ["Front post multiple shot targets", "Front post single shot target"]
+        )
+        & players["Role"].isin(["Shot target"])
+    ]
+
+    fig, ax = plt.subplots(ncols=2, figsize=(20, 8), constrained_layout=True)
+    plot_corner_heatmap(
+        group_corners.groupby("Target location")["Target location"]
+        .count()
+        .reset_index(name="Count")
+        .sort_values(by="Count", ascending=False),
+        col_name="Target location",
+        metric_col_name="Count",
+        all_zones=ALL_ZONES,
+        title="Corner target locations (front post delivery)",
+        ax=ax[0],
+    )
+    plot_corner_heatmap(
+        corner_players.groupby("End location")["End location"]
+        .count()
+        .reset_index(name="Count")
+        .sort_values(by="Count", ascending=False),
+        col_name="End location",
+        metric_col_name="Count",
+        all_zones=ALL_ZONES,
+        title="Player end locations (front post delivery)",
+        ax=ax[1],
+    )
+
+    out_file = f"{OUTPUT_DIR}/left_front_post_delivery_vs_run_heatmap.png"
+    plt.savefig(out_file)
+
+
 def create_all_corner_paths_plot(corners, players):
     print("Creating all corner paths plot...")
     out_file_prefix = f"{OUTPUT_DIR}/corner_paths"
@@ -92,6 +136,7 @@ def create_plots(corners, players):
     create_start_end_heatmaps(players)
     create_all_corner_paths_plot(corners, players)
     create_hand_clustered_corner_paths_plot(corners, players)
+    create_left_front_post_delivery_vs_run_heatmap(corners, players)
 
 
 def run_clustering(corners, players):
@@ -188,23 +233,78 @@ def run_analysis():
     corners = pd.read_csv("data/corners.csv")
     players = pd.read_csv("data/players.csv")
 
-    corners = corners[corners["Discard"] == "No"]
-
     players = pd.merge(
         left=players,
-        right=corners[["Side", "ID"]].rename(columns={"ID": "Corner ID"}),
+        right=corners[["Side", "ID", "Group", "Discard"]].rename(
+            columns={"ID": "Corner ID"}
+        ),
         on="Corner ID",
         how="left",
     )
 
+    corners = corners[corners["Discard"] == "No"]
+    corners = mirror_right_corners_for_corners(corners)
+
+    players = players[players["Discard"] == "No"]
     players = convert_zones_to_xy(
         players, "Start location", "start_x", "start_y", ALL_ZONES
     )
     players = convert_zones_to_xy(players, "End location", "end_x", "end_y", ALL_ZONES)
-    players = mirror_right_corners(players, start_x_col="start_x", end_x_col="end_x")
+    players = mirror_right_corners_for_players(
+        players, start_x_col="start_x", end_x_col="end_x"
+    )
     players = add_play_quality_to_players(players)
 
     create_plots(corners, players)
+
+    # Print hand clustered corner group mean play qualities
+    front_post_mean_play_quality = get_mean_play_quality_for_corner_ids(
+        players,
+        corners[
+            corners["Group"].isin(
+                [
+                    "Front post multiple shot targets",
+                    "Front post single shot target",
+                ]
+            )
+        ]["ID"].tolist(),
+    )
+    print(f"Mean Play Quality for Front Post Group: {front_post_mean_play_quality:.3f}")
+
+    # Print hand clustered corner group mean play qualities
+    back_post_mean_play_quality = get_mean_play_quality_for_corner_ids(
+        players,
+        corners[corners["Group"].isin(["Back post with decoy to front"])][
+            "ID"
+        ].tolist(),
+    )
+    print(f"Mean Play Quality for Back Post Group: {back_post_mean_play_quality:.3f}")
+
+    short_lead_mean_play_quality = get_mean_play_quality_for_corner_ids(
+        players,
+        corners[corners["Group"].isin(["Short lead"])]["ID"].tolist(),
+    )
+    print(f"Mean Play Quality for Short Lead Group: {short_lead_mean_play_quality:.3f}")
+
+    # Rank corners by play quality
+    corners_play_quality = (
+        players.groupby("Corner ID")["Play quality"].sum().reset_index()
+    )
+    corners_play_quality = pd.merge(
+        left=corners_play_quality,
+        right=corners[["ID", "Group", "Game", "Minute"]].rename(
+            columns={"ID": "Corner ID"}
+        ),
+        on="Corner ID",
+        how="left",
+    )
+
+    corners_play_quality = corners_play_quality.sort_values(
+        by="Play quality", ascending=False
+    )
+    corners_play_quality.to_csv(
+        f"{OUTPUT_DIR}/corners_play_quality_ranking.csv", index=False
+    )
 
     run_clustering(corners, players)
 

@@ -1,4 +1,4 @@
-from settings import ALL_ZONES, MARKING, ROLES
+from settings import ALL_ZONES, MARKING, MIRRORED_CORNER_ZONES, ROLES
 
 
 def get_start_and_end_counts(players, corner_group):
@@ -29,12 +29,25 @@ def convert_zones_to_xy(player_paths, zone_col, x_col, y_col, all_zones=ALL_ZONE
     return player_paths
 
 
-def mirror_right_corners(player_paths, start_x_col="start_x", end_x_col="end_x"):
+def mirror_right_corners_for_players(
+    player_paths, start_x_col="start_x", end_x_col="end_x"
+):
     player_paths.loc[player_paths["Side"] == "Right", start_x_col] = (
         80 - player_paths.loc[player_paths["Side"] == "Right", start_x_col]
     )
     player_paths.loc[player_paths["Side"] == "Right", end_x_col] = (
         80 - player_paths.loc[player_paths["Side"] == "Right", end_x_col]
+    )
+
+    player_paths.loc[player_paths["Side"] == "Right", "Start location"] = (
+        player_paths.loc[player_paths["Side"] == "Right", "Start location"].map(
+            MIRRORED_CORNER_ZONES
+        )
+    )
+    player_paths.loc[player_paths["Side"] == "Right", "End location"] = (
+        player_paths.loc[player_paths["Side"] == "Right", "End location"].map(
+            MIRRORED_CORNER_ZONES
+        )
     )
     return player_paths
 
@@ -46,13 +59,16 @@ def add_play_quality_to_players(players, roles=ROLES, marking=MARKING):
     return players
 
 
-def get_mean_play_quality_for_corner_ids(
-    players, corner_ids, roles=ROLES, marking=MARKING
-):
+def get_mean_play_quality_for_corner_ids(players, corner_ids):
     group_players = players[players["Corner ID"].isin(corner_ids)]
-    group_players = add_play_quality_to_players(
-        group_players, roles=roles, marking=marking
-    )
-    mean_play_quality = group_players["Play quality"].mean()
+    mean_play_quality = group_players.groupby("Corner ID")["Play quality"].sum().mean()
 
     return mean_play_quality
+
+
+def mirror_right_corners_for_corners(corners):
+    corners.loc[corners["Side"] == "Right", "Target location"] = corners.loc[
+        corners["Side"] == "Right", "Target location"
+    ].map(MIRRORED_CORNER_ZONES)
+
+    return corners
