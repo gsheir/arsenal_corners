@@ -6,15 +6,10 @@ I use the following corner zones for data collection:
 
 ![](./images/corner_zones.png)
 
-I have initially classified the corners into 4 groups: left vs right and front vs back post. However, the subsequent work will inform whether these groupings are right or not. 
 
-We can plot the frequency of where corners are targeted at:
+We can plot the frequency of where corners are targeted at and where players are starting or ending their runs:
 
-![](./images/left_right_heatmaps.png)
-
-And where players are starting or ending their runs:
-
-![](./images/start_end_heatmaps_Left%20front%20post.png)
+![](./images/left_front_post_delivery_vs_run_heatmap.png)
 
 # Player roles and play diagrams
 
@@ -35,7 +30,7 @@ Because I have collected the start and end locations of every player, we can plo
 
 # Clustering corners using player movement data
 
-How do we know the four groups are correct? Is there a difference between left and right plays or are they just mirrored? Are there more subtle groupings between plays that we can infer from the data (instead of watching video for every corner)? We will try to use clustering to achieve this.
+Are there more subtle groupings between plays that we can infer from the data (instead of watching video for every corner)? We will try to use clustering to achieve this.
 
 We will assume that the "mop up" role doesn't significantly affect the clustering. 
 
