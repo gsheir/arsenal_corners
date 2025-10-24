@@ -1,6 +1,6 @@
 import pandas as pd
 
-OUTPUT_DIR = "images"
+OUTPUT_DIR = "output"
 
 CORNER_ZONES = pd.DataFrame(
     [
