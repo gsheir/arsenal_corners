@@ -267,7 +267,11 @@ def plot_multiple_corner_paths(
         fig, axes = plt.subplots(
             n_rows, n_cols, figsize=(15, 4 * n_rows), constrained_layout=True
         )
-        axes = axes.flatten()
+        # Handle single subplot case
+        if n_rows == 1 and n_cols == 1:
+            axes = [axes]
+        else:
+            axes = axes.flatten()
 
         for i, corner_id in enumerate(corner_ids_in_page):
             ax = axes[i]
@@ -399,14 +403,17 @@ def plot_k_means_results(
             continue
 
         nrows = int(np.ceil(len(cluster_corners) / 4))
+        ncols = min(4, len(cluster_corners))
         fig, axs = plt.subplots(
-            nrows, 4, figsize=(16, 4 * nrows), constrained_layout=True
+            nrows, ncols, figsize=(4 * ncols, 4 * nrows), constrained_layout=True
         )
 
-        # Handle single row case
-        if nrows == 1:
-            axs = axs.reshape(1, -1)
-        axs = axs.flatten()
+        # Handle single subplot case
+        if nrows == 1 and ncols == 1:
+            axs = [axs]
+        else:
+            # For multiple subplots, flatten the array
+            axs = axs.flatten()
 
         for idx, corner_id in enumerate(cluster_corners.index):
             # Get original player paths for this corner
@@ -481,12 +488,9 @@ def plot_spectral_results(
         # Handle single subplot case
         if nrows == 1 and ncols == 1:
             axs = [axs]
-        elif nrows == 1:
-            axs = axs.reshape(1, -1)
-        elif ncols == 1:
-            axs = axs.reshape(-1, 1)
-
-        axs = axs.flatten()
+        else:
+            # For multiple subplots, flatten the array
+            axs = axs.flatten()
 
         # Plot each corner in the cluster
         for idx, corner_id in enumerate(cluster_corner_ids):
