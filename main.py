@@ -5,6 +5,7 @@ import pandas as pd
 
 from clustering.kmeans_clustering import KMeansClustering
 from clustering.role_aggregated_kmeans_clustering import RoleAggregatedKMeansClustering
+from clustering.similarity import SimilarityCalculator
 from clustering.spectral_clustering import SimilaritySpectralClustering
 from tools.plotting_tools import (
     plot_corner_heatmap,
@@ -21,7 +22,7 @@ from tools.utils import (
     mirror_right_corners_for_corners,
     mirror_right_corners_for_players,
 )
-from clustering.similarity import SimilarityCalculator
+
 
 def create_corner_zone_plot():
     print("Creating corner zone plot...")
@@ -217,7 +218,6 @@ def run_similarity_clustering(corners, players):
     """Run similarity-based clustering analysis on corners."""
     print("Running similarity-based clustering analysis...")
 
-
     # Create similarity matrix separately
     similarity_calculator = SimilarityCalculator(corners, players)
     similarity_matrix = similarity_calculator.get_similarity_matrix()
@@ -226,7 +226,6 @@ def run_similarity_clustering(corners, players):
     results = SimilaritySpectralClustering(
         corners, players, similarity_matrix, corner_ids
     ).run()
-
 
     return results
 

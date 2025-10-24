@@ -7,7 +7,6 @@ import seaborn as sns
 from sklearn.cluster import SpectralClustering
 from sklearn.metrics import silhouette_score
 
-from clustering.similarity import SimilarityCalculator
 from tools.settings import OUTPUT_DIR
 
 
@@ -19,7 +18,13 @@ class SimilaritySpectralClustering:
     performs spectral clustering and analysis on the results.
     """
 
-    def __init__(self, corners: pd.DataFrame, players: pd.DataFrame, similarity_matrix: np.ndarray, corner_ids: List[str]):
+    def __init__(
+        self,
+        corners: pd.DataFrame,
+        players: pd.DataFrame,
+        similarity_matrix: np.ndarray,
+        corner_ids: List[str],
+    ):
         """
         Initialize the clustering system.
 
@@ -36,8 +41,6 @@ class SimilaritySpectralClustering:
         self.similarity_matrix = similarity_matrix
         self.cluster_labels = None
         self.cluster_results = None
-
-
 
     def find_optimal_clusters(self, max_clusters: int = 10) -> int:
         """
@@ -291,7 +294,6 @@ class SimilaritySpectralClustering:
             Dictionary with complete results
         """
         print("Starting corner similarity clustering analysis...")
-
 
         self.perform_clustering(n_clusters)
         self.analyse_clusters()

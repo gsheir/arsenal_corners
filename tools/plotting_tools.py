@@ -345,7 +345,7 @@ def plot_k_means_results(
 
     plt.savefig(out_file)
     plt.close()
-    
+
     # Plot PCA scatter
     out_file = f"{out_dir}/{filename_prefix}corner_clusters_pca.png"
     plt.figure(figsize=(8, 6))
