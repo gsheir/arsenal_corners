@@ -89,7 +89,7 @@ MIRRORED_CORNER_ZONES = {
 }
 
 ROLES = {
-    "Shot target": 1,
+    "Shot target": 1.0,
     "Pass target": 0.5,
     "Second target": 0.5,
     "Blocker": 0.1,
@@ -98,9 +98,9 @@ ROLES = {
 }
 
 MARKING = {
-    "Free": 1,
-    "Freed by blocker": 1,
-    "Blocking": 1,
+    "Free": 1.0,
+    "Freed by blocker": 1.0,
+    "Blocking": 1.0,
     "Gained separation": 0.8,
     "Goal marked": 0.3,
     "Watched zonally": 0.3,
@@ -110,22 +110,23 @@ MARKING = {
 # Role importance hierarchy for similarity clustering
 ROLE_WEIGHTS = {
     "Shot target": 1.0,
-    "Pass target": 0.8,
-    "Second target": 0.6,
+    "Pass target": 0.9,
+    "Second target": 0.2,
     "Decoy": 0.8,
-    "Blocker": 0.6,
+    "Blocker": 0.1,
     "Mop up": 0.01,
 }
 
 SIMILARITY_SETTINGS = {
     "component_weights": {
-        "role_weighted_path_similarity": 0.5,
-        "role_composition_similarity": 0.3,
-        "player_count_similarity": 0.2,
+        "role_weighted_path_similarity": 0.7,
+        "role_composition_similarity": 0.2,
+        "player_count_similarity": 0.1,
     },
     "path_similarity_weights": {
-        "start_similarity": 0.4,
-        "length_similarity": 0.3,
-        "direction_similarity": 0.3,
+        "start_similarity": 0.05,
+        "end_similarity": 0.5,
+        "length_similarity": 0.4,
+        "direction_similarity": 0.05,
     },
 }

@@ -126,7 +126,11 @@ class SimilarityCalculator:
             start_distance = euclidean((start1_x, start1_y), (start2_x, start2_y))
             start_similarity = 1 - start_distance / np.sqrt(2)
 
-            # Component 2: Path length difference
+            # Component 2: End position distance
+            end_distance = euclidean((end1_x, end1_y), (end2_x, end2_y))
+            end_similarity = 1 - end_distance / np.sqrt(2)
+
+            # Component 3: Path length difference
             path1_length = euclidean((start1_x, start1_y), (end1_x, end1_y))
             path2_length = euclidean((start2_x, start2_y), (end2_x, end2_y))
 
@@ -137,7 +141,7 @@ class SimilarityCalculator:
                     path1_length + path2_length
                 )
 
-            # Component 3: Path direction difference
+            # Component 4: Path direction difference
             if path1_length > 0 and path2_length > 0:
                 path1_direction = (
                     (end1_x - start1_x) / path1_length,
@@ -162,6 +166,8 @@ class SimilarityCalculator:
             path_similarity = (
                 self.similarity_settings["path_similarity_weights"]["start_similarity"]
                 * start_similarity
+                + self.similarity_settings["path_similarity_weights"]["end_similarity"]
+                * end_similarity
                 + self.similarity_settings["path_similarity_weights"][
                     "length_similarity"
                 ]
