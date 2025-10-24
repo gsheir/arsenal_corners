@@ -1,4 +1,4 @@
-# Analysis of Arsenal's corners so far in the WSL in 2025/26
+# Analysis of Arsenal Women's corners so far in the WSL in 2025/26
 
 A tool to cluster and analyse the quality of Arsenal's corners.
 
