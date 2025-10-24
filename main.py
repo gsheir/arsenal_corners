@@ -1,21 +1,28 @@
 import os
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 
-from corner_similarity_clustering import CornerSimilarityClustering
-from kmeans_clustering import KMeansClustering
-from plotting_tools import (plot_corner_heatmap, plot_corner_paths,
-                            plot_corner_zones, plot_k_means_results,
-                            plot_multiple_corner_paths,
-                            plot_start_end_heatmaps)
-from role_aggregated_kmeans_clustering import RoleAggregatedKMeansClustering
-from settings import ALL_ZONES, CORNER_ZONES, OUT_CORNER_ZONES, OUTPUT_DIR
-from utils import (add_play_quality_to_players, convert_zones_to_xy,
-                   get_mean_play_quality_for_corner_ids,
-                   mirror_right_corners_for_corners,
-                   mirror_right_corners_for_players)
+from clustering.kmeans_clustering import KMeansClustering
+from clustering.role_aggregated_kmeans_clustering import RoleAggregatedKMeansClustering
+from clustering.similarity import SimilarityCalculator
+from clustering.spectral_clustering import SimilaritySpectralClustering
+from tools.plotting_tools import (
+    plot_corner_heatmap,
+    plot_corner_zones,
+    plot_k_means_results,
+    plot_multiple_corner_paths,
+    plot_spectral_results,
+    plot_start_end_heatmaps,
+)
+from tools.settings import ALL_ZONES, CORNER_ZONES, OUT_CORNER_ZONES, OUTPUT_DIR
+from tools.utils import (
+    add_play_quality_to_players,
+    convert_zones_to_xy,
+    get_mean_play_quality_for_corner_ids,
+    mirror_right_corners_for_corners,
+    mirror_right_corners_for_players,
+)
 
 
 def create_corner_zone_plot():
@@ -29,7 +36,7 @@ def create_left_right_heatmaps(corners):
     print("Creating left-right heatmaps...")
     left_corners = corners[corners["Side"] == "Left"]
     right_corners = corners[corners["Side"] == "Right"]
-    fig, ax = plt.subplots(ncols=2, figsize=(20, 8), constrained_layout=True)
+    _, ax = plt.subplots(ncols=2, figsize=(20, 8), constrained_layout=True)
 
     plot_corner_heatmap(
         left_corners.groupby("Target location")["Target location"]
@@ -56,13 +63,14 @@ def create_left_right_heatmaps(corners):
 
     out_file = f"{OUTPUT_DIR}/left_right_heatmaps.png"
     plt.savefig(out_file)
+    plt.close()
 
 
 def create_start_end_heatmaps(players):
     print("Creating start-end heatmaps...")
     for group in players["Corner group"].unique():
         out_file = f"{OUTPUT_DIR}/start_end_heatmaps_{group}.png"
-        fig = plot_start_end_heatmaps(players, group, ALL_ZONES, out_file=out_file)
+        plot_start_end_heatmaps(players, group, ALL_ZONES, out_file=out_file)
 
 
 def create_left_front_post_delivery_vs_run_heatmap(corners, players):
@@ -105,6 +113,7 @@ def create_left_front_post_delivery_vs_run_heatmap(corners, players):
 
     out_file = f"{OUTPUT_DIR}/left_front_post_delivery_vs_run_heatmap.png"
     plt.savefig(out_file)
+    plt.close()
 
 
 def create_all_corner_paths_plot(corners, players):
@@ -133,7 +142,6 @@ def create_hand_clustered_corner_paths_plot(corners, players):
 def create_plots(corners, players):
     create_corner_zone_plot()
     create_left_right_heatmaps(corners)
-    create_start_end_heatmaps(players)
     create_all_corner_paths_plot(corners, players)
     create_hand_clustered_corner_paths_plot(corners, players)
     create_left_front_post_delivery_vs_run_heatmap(corners, players)
@@ -211,9 +219,23 @@ def run_similarity_clustering(corners, players):
     """Run similarity-based clustering analysis on corners."""
     print("Running similarity-based clustering analysis...")
 
-    # Create and run the similarity clustering
-    similarity_clustering = CornerSimilarityClustering(corners, players)
-    results = similarity_clustering.run_complete_analysis()
+    # Create similarity matrix separately
+    similarity_calculator = SimilarityCalculator(corners, players)
+    similarity_matrix = similarity_calculator.get_similarity_matrix()
+    corner_ids = similarity_calculator.get_corner_ids()
+
+    results = SimilaritySpectralClustering(
+        corners, players, similarity_matrix, corner_ids
+    ).run()
+
+    # Plot the spectral clustering results
+    plot_spectral_results(
+        cluster_results=results["cluster_results"],
+        cluster_labels=results["cluster_labels"],
+        corner_ids=results["corner_ids"],
+        players=players,
+        filename_prefix="spectral_",
+    )
 
     return results
 
