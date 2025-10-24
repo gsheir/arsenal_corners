@@ -116,3 +116,16 @@ ROLE_WEIGHTS = {
     "Blocker": 0.6,
     "Mop up": 0.01,
 }
+
+SIMILARITY_SETTINGS = {
+    "component_weights": {
+        "role_weighted_path_similarity": 0.5,
+        "role_composition_similarity": 0.3,
+        "player_count_similarity": 0.2,
+    },
+    "path_similarity_weights": {
+        "start_similarity": 0.4,
+        "length_similarity": 0.3,
+        "direction_similarity": 0.3,
+    },
+}

@@ -5,7 +5,7 @@ import pandas as pd
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import euclidean
 
-from tools.settings import ROLE_WEIGHTS
+from tools.settings import ROLE_WEIGHTS, SIMILARITY_SETTINGS
 
 
 class SimilarityCalculator:
@@ -16,7 +16,12 @@ class SimilarityCalculator:
     and provides different similarity calculation methods.
     """
 
-    def __init__(self, corners: pd.DataFrame, players: pd.DataFrame):
+    def __init__(
+        self,
+        corners: pd.DataFrame,
+        players: pd.DataFrame,
+        similarity_settings: dict = SIMILARITY_SETTINGS,
+    ):
         """
         Initialize the similarity matrix calculator.
 
@@ -28,16 +33,13 @@ class SimilarityCalculator:
         self.players = players
         self.corner_ids = corners["ID"].tolist()
         self.n_corners = len(self.corner_ids)
+        self.similarity_settings = similarity_settings
 
         # Role hierarchy - higher values = more important
         self.role_weights = ROLE_WEIGHTS
 
         # Component weights for final similarity score
-        self.component_weights = {
-            "role_position": 0.7,  # Role-weighted position similarity
-            "role_composition": 0.2,  # Role structure similarity
-            "player_count": 0.1,  # Player count similarity
-        }
+        self.component_weights = self.similarity_settings["component_weights"]
 
         # Field dimensions for normalization (based on your zone structure)
         self.field_width = 80  # x-axis
@@ -51,8 +53,8 @@ class SimilarityCalculator:
         norm_y = y / self.field_length
         return norm_x, norm_y
 
-    def calculate_position_distance(
-        self, player1: pd.Series, player2: pd.Series
+    def calculate_path_similarity(
+        self, player_1: pd.Series, player_2: pd.Series, method: str = "euclidean"
     ) -> float:
         """
         Calculate 4D distance between two players (start and end positions).
@@ -65,30 +67,34 @@ class SimilarityCalculator:
         """
         # Check for NaN values and return max distance if any are found
         coords1 = [
-            player1["start_x"],
-            player1["start_y"],
-            player1["end_x"],
-            player1["end_y"],
+            player_1["start_x"],
+            player_1["start_y"],
+            player_1["end_x"],
+            player_1["end_y"],
         ]
         coords2 = [
-            player2["start_x"],
-            player2["start_y"],
-            player2["end_x"],
-            player2["end_y"],
+            player_2["start_x"],
+            player_2["start_y"],
+            player_2["end_x"],
+            player_2["end_y"],
         ]
 
         if any(pd.isna(coords1)) or any(pd.isna(coords2)):
-            return 1.0  # Maximum distance for missing data
+            return 0.0  # Zero similarity for missing data
 
         # normalise coordinates
         start1_x, start1_y = self.normalise_coordinates(
-            player1["start_x"], player1["start_y"]
+            player_1["start_x"], player_1["start_y"]
         )
-        end1_x, end1_y = self.normalise_coordinates(player1["end_x"], player1["end_y"])
+        end1_x, end1_y = self.normalise_coordinates(
+            player_1["end_x"], player_1["end_y"]
+        )
         start2_x, start2_y = self.normalise_coordinates(
-            player2["start_x"], player2["start_y"]
+            player_2["start_x"], player_2["start_y"]
         )
-        end2_x, end2_y = self.normalise_coordinates(player2["end_x"], player2["end_y"])
+        end2_x, end2_y = self.normalise_coordinates(
+            player_2["end_x"], player_2["end_y"]
+        )
 
         # Check for any NaN values after normalization
         normalised_coords = [
@@ -102,46 +108,100 @@ class SimilarityCalculator:
             end2_y,
         ]
         if any(pd.isna(normalised_coords)) or any(np.isinf(normalised_coords)):
-            return 1.0  # Maximum distance for invalid coordinates
+            return 0.0  # Zero similarity for missing or invalid data
 
-        # Calculate Euclidean distances for start and end positions
-        start_distance = euclidean([start1_x, start1_y], [start2_x, start2_y])
-        end_distance = euclidean([end1_x, end1_y], [end2_x, end2_y])
+        if method == "euclidean":
+            # Calculate Euclidean distances for start and end positions
+            start_distance = euclidean([start1_x, start1_y], [start2_x, start2_y])
+            end_distance = euclidean([end1_x, end1_y], [end2_x, end2_y])
 
-        # Average the distances and normalise (max possible distance is sqrt(2))
-        avg_distance = (start_distance + end_distance) / 2
-        normalised_distance = avg_distance / np.sqrt(2)
+            # Average the distances and normalise (max possible distance is sqrt(2))
+            avg_distance = (start_distance + end_distance) / 2
+            normalised_distance = avg_distance / np.sqrt(2)
 
-        return normalised_distance
+            path_similarity = 1 - normalised_distance  # Convert to similarity
 
-    def calculate_role_position_similarity(
-        self, role_players1: pd.DataFrame, role_players2: pd.DataFrame
+        elif method == "decomposed":
+            # Component 1: Start position distance
+            start_distance = euclidean((start1_x, start1_y), (start2_x, start2_y))
+            start_similarity = 1 - start_distance / np.sqrt(2)
+
+            # Component 2: Path length difference
+            path1_length = euclidean((start1_x, start1_y), (end1_x, end1_y))
+            path2_length = euclidean((start2_x, start2_y), (end2_x, end2_y))
+
+            if path1_length + path2_length == 0:
+                length_similarity = 1.0  # Both paths are zero-length
+            else:
+                length_similarity = 1 - abs(path1_length - path2_length) / (
+                    path1_length + path2_length
+                )
+
+            # Component 3: Path direction difference
+            if path1_length > 0 and path2_length > 0:
+                path1_direction = (
+                    (end1_x - start1_x) / path1_length,
+                    (end1_y - start1_y) / path1_length,
+                )
+                path2_direction = (
+                    (end2_x - start2_x) / path2_length,
+                    (end2_y - start2_y) / path2_length,
+                )
+                direction_similarity = np.dot(
+                    path1_direction, path2_direction
+                )  # Cosine similarity
+                direction_similarity = (
+                    direction_similarity + 1
+                ) / 2  # Normalise to [0,1]
+
+            elif path1_length == 0 and path2_length == 0:
+                direction_similarity = 1.0  # Both paths are zero-length
+            else:
+                direction_similarity = 0.0  # One path is zero-length
+
+            path_similarity = (
+                self.similarity_settings["path_similarity_weights"]["start_similarity"]
+                * start_similarity
+                + self.similarity_settings["path_similarity_weights"][
+                    "length_similarity"
+                ]
+                * length_similarity
+                + self.similarity_settings["path_similarity_weights"][
+                    "direction_similarity"
+                ]
+                * direction_similarity
+            )
+
+        return path_similarity
+
+    def calculate_role_weighted_path_similarity(
+        self, role_players_1: pd.DataFrame, role_players_2: pd.DataFrame
     ) -> float:
         """
         Calculate optimal matching similarity for players in the same role.
 
         Args:
-            role_players1, role_players2: DataFrames of players with the same role
+            role_players_1, role_players_2: DataFrames of players with the same role
 
         Returns:
             Similarity score between 0 and 1
         """
-        if len(role_players1) == 0 or len(role_players2) == 0:
+        if len(role_players_1) == 0 or len(role_players_2) == 0:
             return 0.0
 
         # Create distance matrix
         distances = []
-        for _, p1 in role_players1.iterrows():
+        for _, p1 in role_players_1.iterrows():
             row = []
-            for _, p2 in role_players2.iterrows():
-                distance = self.calculate_position_distance(p1, p2)
+            for _, p2 in role_players_2.iterrows():
+                distance = self.calculate_path_similarity(p1, p2, method="decomposed")
                 row.append(distance)
             distances.append(row)
 
         distances = np.array(distances)
 
         # Handle different numbers of players using padding
-        max_players = max(len(role_players1), len(role_players2))
+        max_players = max(len(role_players_1), len(role_players_2))
         padded_distances = np.ones(
             (max_players, max_players)
         )  # Fill with high distance (1.0)
@@ -161,19 +221,19 @@ class SimilarityCalculator:
         return max(0, similarity)  # Ensure non-negative
 
     def calculate_role_composition_similarity(
-        self, corner1_players: pd.DataFrame, corner2_players: pd.DataFrame
+        self, corner_1_players: pd.DataFrame, corner_2_players: pd.DataFrame
     ) -> float:
         """
         Calculate similarity based on which roles are present in each corner.
 
         Args:
-            corner1_players, corner2_players: DataFrames of players for each corner
+            corner_1_players, corner_2_players: DataFrames of players for each corner
 
         Returns:
             Role composition similarity score between 0 and 1
         """
-        roles1 = set(corner1_players["Role"].unique())
-        roles2 = set(corner2_players["Role"].unique())
+        roles1 = set(corner_1_players["Role"].unique())
+        roles2 = set(corner_2_players["Role"].unique())
 
         all_roles = roles1.union(roles2)
 
@@ -194,19 +254,19 @@ class SimilarityCalculator:
         return intersection_weight / union_weight if union_weight > 0 else 0
 
     def calculate_player_count_similarity(
-        self, corner1_players: pd.DataFrame, corner2_players: pd.DataFrame
+        self, corner_1_players: pd.DataFrame, corner_2_players: pd.DataFrame
     ) -> float:
         """
         Calculate similarity based on total number of players.
 
         Args:
-            corner1_players, corner2_players: DataFrames of players for each corner
+            corner_1_players, corner_2_players: DataFrames of players for each corner
 
         Returns:
             Player count similarity score between 0 and 1
         """
-        count1 = len(corner1_players)
-        count2 = len(corner2_players)
+        count1 = len(corner_1_players)
+        count2 = len(corner_2_players)
 
         if count1 == 0 and count2 == 0:
             return 1.0
@@ -216,44 +276,44 @@ class SimilarityCalculator:
 
         return min_count / max_count if max_count > 0 else 0
 
-    def calculate_corner_similarity(self, corner1_id: str, corner2_id: str) -> float:
+    def calculate_corner_similarity(self, corner_1_id: str, corner_2_id: str) -> float:
         """
         Calculate comprehensive similarity between two corners.
 
         Args:
-            corner1_id, corner2_id: Corner identifiers
+            corner_1_id, corner_2_id: Corner identifiers
 
         Returns:
             Similarity score between 0 and 1
         """
-        corner1_players = self.players[self.players["Corner ID"] == corner1_id].copy()
-        corner2_players = self.players[self.players["Corner ID"] == corner2_id].copy()
+        corner_1_players = self.players[self.players["Corner ID"] == corner_1_id].copy()
+        corner_2_players = self.players[self.players["Corner ID"] == corner_2_id].copy()
 
-        if len(corner1_players) == 0 or len(corner2_players) == 0:
+        if len(corner_1_players) == 0 or len(corner_2_players) == 0:
             return 0.0
 
         # Component 1: Role-weighted position similarity
         role_similarities = []
         total_role_weight = 0
 
-        all_roles = set(corner1_players["Role"].unique()).union(
-            set(corner2_players["Role"].unique())
+        all_roles = set(corner_1_players["Role"].unique()).union(
+            set(corner_2_players["Role"].unique())
         )
 
         for role in all_roles:
             role_weight = self.role_weights.get(role, 0.1)
-            role1_players = corner1_players[corner1_players["Role"] == role]
-            role2_players = corner2_players[corner2_players["Role"] == role]
+            role_players_1 = corner_1_players[corner_1_players["Role"] == role]
+            role_players_2 = corner_2_players[corner_2_players["Role"] == role]
 
-            if len(role1_players) == 0 and len(role2_players) == 0:
+            if len(role_players_1) == 0 and len(role_players_2) == 0:
                 continue
 
-            if len(role1_players) == 0 or len(role2_players) == 0:
-                # Role missing in one corner - penalty proportional to importance
+            if len(role_players_1) == 0 or len(role_players_2) == 0:
+                # Role missing in one corner
                 role_similarity = 0.0
             else:
-                role_similarity = self.calculate_role_position_similarity(
-                    role1_players, role2_players
+                role_similarity = self.calculate_role_weighted_path_similarity(
+                    role_players_1, role_players_2
                 )
 
             role_similarities.append(role_similarity * role_weight)
@@ -265,19 +325,22 @@ class SimilarityCalculator:
 
         # Component 2: Role composition similarity
         role_composition_similarity = self.calculate_role_composition_similarity(
-            corner1_players, corner2_players
+            corner_1_players, corner_2_players
         )
 
         # Component 3: Player count similarity
         player_count_similarity = self.calculate_player_count_similarity(
-            corner1_players, corner2_players
+            corner_1_players, corner_2_players
         )
 
         # Combine components
         final_similarity = (
-            self.component_weights["role_position"] * role_position_similarity
-            + self.component_weights["role_composition"] * role_composition_similarity
-            + self.component_weights["player_count"] * player_count_similarity
+            self.component_weights["role_weighted_path_similarity"]
+            * role_position_similarity
+            + self.component_weights["role_composition_similarity"]
+            * role_composition_similarity
+            + self.component_weights["player_count_similarity"]
+            * player_count_similarity
         )
 
         return final_similarity
