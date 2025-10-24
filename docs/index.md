@@ -29,7 +29,7 @@ Because I have collected the start and end locations of every player, we can plo
 
 ![](../output/corner_paths_page_1.png)
 
-[Link: All corner path plots](./all_corner_paths.md)
+[All corner path plots](./all_corner_paths.md)
 
 # Clustering corners using player movement data
 
@@ -47,8 +47,6 @@ I clustered these by looking at the play diagrams, and ended up with
 - Front post, single shot targeet
 - Back post
 - Short lead
-
-
 
 ## K-means and role aggregated k-means
 
@@ -73,7 +71,7 @@ We define a similarity score based on role-weighted distance, role composition e
 
 ![](../output/corner_similarity_clustering.png)
 
-
+[All spectral clustering results](./all_spectral_results.md)
 
 # Play quality
 
