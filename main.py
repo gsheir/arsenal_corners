@@ -69,7 +69,7 @@ def create_start_end_heatmaps(players):
     print("Creating start-end heatmaps...")
     for group in players["Corner group"].unique():
         out_file = f"{OUTPUT_DIR}/start_end_heatmaps_{group}.png"
-        fig = plot_start_end_heatmaps(players, group, ALL_ZONES, out_file=out_file)
+        plot_start_end_heatmaps(players, group, ALL_ZONES, out_file=out_file)
 
 
 def create_left_front_post_delivery_vs_run_heatmap(corners, players):

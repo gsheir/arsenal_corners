@@ -166,7 +166,7 @@ def plot_corner_heatmap(
 def plot_start_end_heatmaps(players, corner_group, all_zones, out_file=None):
     start_counts, end_counts = get_start_and_end_counts(players, corner_group)
 
-    fig, ax = plt.subplots(ncols=2, figsize=(8, 4), constrained_layout=True)
+    _, ax = plt.subplots(ncols=2, figsize=(8, 4), constrained_layout=True)
 
     plot_corner_heatmap(
         start_counts,
