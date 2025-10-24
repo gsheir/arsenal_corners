@@ -438,3 +438,186 @@ def plot_k_means_results(
             f"{out_dir}/{filename_prefix}{out_file_prefix}_cluster_{cluster_id}.png"
         )
         plt.close()
+
+
+def plot_spectral_results(
+    cluster_results,
+    cluster_labels,
+    corner_ids,
+    players,
+    out_dir=OUTPUT_DIR,
+    filename_prefix="spectral_",
+):
+    """
+    Plot the results of spectral clustering showing individual corners per cluster.
+    
+    Args:
+        cluster_results: Dictionary with cluster analysis results
+        cluster_labels: Array of cluster labels for each corner
+        corner_ids: List of corner IDs
+        players: DataFrame with player data
+        out_dir: Output directory for plots
+        filename_prefix: Prefix for output filenames
+    """
+    n_clusters = len(np.unique(cluster_labels))
+    
+    # Plot individual corners per cluster
+    for cluster_id in range(n_clusters):
+        # Get corners in this cluster
+        cluster_corner_indices = np.where(cluster_labels == cluster_id)[0]
+        cluster_corner_ids = [corner_ids[i] for i in cluster_corner_indices]
+        
+        if len(cluster_corner_ids) == 0:
+            continue
+        
+        # Calculate grid dimensions
+        nrows = int(np.ceil(len(cluster_corner_ids) / 4))
+        ncols = min(4, len(cluster_corner_ids))
+        
+        fig, axs = plt.subplots(
+            nrows, ncols, figsize=(4 * ncols, 4 * nrows), constrained_layout=True
+        )
+        
+        # Handle single subplot case
+        if nrows == 1 and ncols == 1:
+            axs = [axs]
+        elif nrows == 1:
+            axs = axs.reshape(1, -1)
+        elif ncols == 1:
+            axs = axs.reshape(-1, 1)
+        
+        axs = axs.flatten()
+        
+        # Plot each corner in the cluster
+        for idx, corner_id in enumerate(cluster_corner_ids):
+            # Get player paths for this corner
+            corner_player_paths = players[players["Corner ID"] == corner_id]
+            
+            if len(corner_player_paths) > 0:
+                plot_corner_paths(
+                    corner_player_paths,
+                    title=f"Corner ID {corner_id}",
+                    ax=axs[idx],
+                    legend=False,
+                )
+                
+                # Add play quality info if available
+                if "Play quality" in corner_player_paths.columns:
+                    play_quality = corner_player_paths["Play quality"].sum()
+                    axs[idx].text(
+                        0.5,
+                        -0.1,
+                        f"Play Quality: {play_quality:.2f}",
+                        transform=axs[idx].transAxes,
+                        ha="center",
+                        va="top",
+                        fontsize=8,
+                    )
+            else:
+                axs[idx].text(
+                    0.5,
+                    0.5,
+                    f"No data for {corner_id}",
+                    transform=axs[idx].transAxes,
+                    ha="center",
+                    va="center",
+                )
+        
+        # Hide any unused subplots
+        for j in range(len(cluster_corner_ids), len(axs)):
+            axs[j].axis("off")
+        
+        # Create cluster title with key information
+        cluster_info = cluster_results.get(cluster_id, {})
+        cluster_size = cluster_info.get("size", len(cluster_corner_ids))
+        
+        # Add cluster summary information
+        title_parts = [f"Spectral Cluster {cluster_id} ({cluster_size} corners)"]
+        
+        # Add key role information if available
+        role_patterns = cluster_info.get("role_patterns", {})
+        key_roles = []
+        for role, pattern in role_patterns.items():
+            if pattern["count"] > 0:
+                key_roles.append(f"{role}: {pattern['count']}")
+        
+        if key_roles:
+            title_parts.append("Key roles: " + ", ".join(key_roles[:3]))  # Show top 3
+        
+        title = "\n".join(title_parts)
+        plt.suptitle(title, fontsize=14)
+        
+        # Save the plot
+        plt.savefig(
+            f"{out_dir}/{filename_prefix}cluster_{cluster_id}.png",
+            dpi=300,
+            bbox_inches="tight",
+        )
+        plt.close()
+    
+    # Create a summary plot showing cluster statistics
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+    
+    # Plot 1: Cluster sizes
+    cluster_sizes = [len(np.where(cluster_labels == i)[0]) for i in range(n_clusters)]
+    bars = ax1.bar(range(n_clusters), cluster_sizes)
+    ax1.set_xlabel("Cluster ID")
+    ax1.set_ylabel("Number of Corners")
+    ax1.set_title("Spectral Clustering: Cluster Sizes")
+    ax1.set_xticks(range(n_clusters))
+    
+    # Add count labels on bars
+    for bar, count in zip(bars, cluster_sizes):
+        ax1.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 0.1,
+            str(count),
+            ha="center",
+            va="bottom",
+        )
+    
+    # Plot 2: Average play quality per cluster (if available)
+    if "Play quality" in players.columns:
+        cluster_play_qualities = []
+        for cluster_id in range(n_clusters):
+            cluster_corner_indices = np.where(cluster_labels == cluster_id)[0]
+            cluster_corner_ids = [corner_ids[i] for i in cluster_corner_indices]
+            
+            cluster_players = players[players["Corner ID"].isin(cluster_corner_ids)]
+            if len(cluster_players) > 0:
+                avg_quality = get_mean_play_quality_for_corner_ids(players, cluster_corner_ids)
+                cluster_play_qualities.append(avg_quality)
+            else:
+                cluster_play_qualities.append(0)
+        
+        bars2 = ax2.bar(range(n_clusters), cluster_play_qualities)
+        ax2.set_xlabel("Cluster ID")
+        ax2.set_ylabel("Average Play Quality")
+        ax2.set_title("Spectral Clustering: Average Play Quality")
+        ax2.set_xticks(range(n_clusters))
+        
+        # Add quality labels on bars
+        for bar, quality in zip(bars2, cluster_play_qualities):
+            ax2.text(
+                bar.get_x() + bar.get_width() / 2,
+                bar.get_height() + 0.01,
+                f"{quality:.3f}",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+            )
+    else:
+        ax2.text(0.5, 0.5, "Play quality data not available", 
+                transform=ax2.transAxes, ha="center", va="center")
+        ax2.set_title("Play Quality Analysis")
+    
+    plt.tight_layout()
+    plt.savefig(
+        f"{out_dir}/{filename_prefix}summary.png",
+        dpi=300,
+        bbox_inches="tight",
+    )
+    plt.close()
+    
+    print(f"Spectral clustering plots saved to {out_dir}")
+    print(f"Generated plots for {n_clusters} clusters")

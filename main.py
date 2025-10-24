@@ -12,6 +12,7 @@ from tools.plotting_tools import (
     plot_corner_zones,
     plot_k_means_results,
     plot_multiple_corner_paths,
+    plot_spectral_results,
     plot_start_end_heatmaps,
 )
 from tools.settings import ALL_ZONES, CORNER_ZONES, OUT_CORNER_ZONES, OUTPUT_DIR
@@ -226,6 +227,15 @@ def run_similarity_clustering(corners, players):
     results = SimilaritySpectralClustering(
         corners, players, similarity_matrix, corner_ids
     ).run()
+
+    # Plot the spectral clustering results
+    plot_spectral_results(
+        cluster_results=results["cluster_results"],
+        cluster_labels=results["cluster_labels"],
+        corner_ids=results["corner_ids"],
+        players=players,
+        filename_prefix="spectral_"
+    )
 
     return results
 
