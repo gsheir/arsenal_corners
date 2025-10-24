@@ -234,7 +234,7 @@ def run_similarity_clustering(corners, players):
         cluster_labels=results["cluster_labels"],
         corner_ids=results["corner_ids"],
         players=players,
-        filename_prefix="spectral_"
+        filename_prefix="spectral_",
     )
 
     return results
