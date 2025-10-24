@@ -3,8 +3,9 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from clustering.corner_similarity_clustering import CornerSimilarityClustering
 from clustering.kmeans_clustering import KMeansClustering
+from clustering.role_aggregated_kmeans_clustering import RoleAggregatedKMeansClustering
+from clustering.spectral_clustering import SimilaritySpectralClustering
 from tools.plotting_tools import (
     plot_corner_heatmap,
     plot_corner_zones,
@@ -12,7 +13,6 @@ from tools.plotting_tools import (
     plot_multiple_corner_paths,
     plot_start_end_heatmaps,
 )
-from clustering.role_aggregated_kmeans_clustering import RoleAggregatedKMeansClustering
 from tools.settings import ALL_ZONES, CORNER_ZONES, OUT_CORNER_ZONES, OUTPUT_DIR
 from tools.utils import (
     add_play_quality_to_players,
@@ -21,7 +21,7 @@ from tools.utils import (
     mirror_right_corners_for_corners,
     mirror_right_corners_for_players,
 )
-
+from clustering.similarity import SimilarityCalculator
 
 def create_corner_zone_plot():
     print("Creating corner zone plot...")
@@ -61,6 +61,7 @@ def create_left_right_heatmaps(corners):
 
     out_file = f"{OUTPUT_DIR}/left_right_heatmaps.png"
     plt.savefig(out_file)
+    plt.close()
 
 
 def create_start_end_heatmaps(players):
@@ -110,6 +111,7 @@ def create_left_front_post_delivery_vs_run_heatmap(corners, players):
 
     out_file = f"{OUTPUT_DIR}/left_front_post_delivery_vs_run_heatmap.png"
     plt.savefig(out_file)
+    plt.close()
 
 
 def create_all_corner_paths_plot(corners, players):
@@ -138,7 +140,6 @@ def create_hand_clustered_corner_paths_plot(corners, players):
 def create_plots(corners, players):
     create_corner_zone_plot()
     create_left_right_heatmaps(corners)
-    create_start_end_heatmaps(players)
     create_all_corner_paths_plot(corners, players)
     create_hand_clustered_corner_paths_plot(corners, players)
     create_left_front_post_delivery_vs_run_heatmap(corners, players)
@@ -216,9 +217,16 @@ def run_similarity_clustering(corners, players):
     """Run similarity-based clustering analysis on corners."""
     print("Running similarity-based clustering analysis...")
 
-    # Create and run the similarity clustering
-    similarity_clustering = CornerSimilarityClustering(corners, players)
-    results = similarity_clustering.run_complete_analysis()
+
+    # Create similarity matrix separately
+    similarity_calculator = SimilarityCalculator(corners, players)
+    similarity_matrix = similarity_calculator.get_similarity_matrix()
+    corner_ids = similarity_calculator.get_corner_ids()
+
+    results = SimilaritySpectralClustering(
+        corners, players, similarity_matrix, corner_ids
+    ).run()
+
 
     return results
 

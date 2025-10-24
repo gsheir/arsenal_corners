@@ -71,6 +71,7 @@ def plot_corner_zones(corner_zones, out_corner_zones, ax=None, out_file=None):
 
     if out_file:
         plt.savefig(out_file)
+        plt.close()
 
 
 def plot_corner_heatmap(
@@ -118,7 +119,7 @@ def plot_corner_heatmap(
     )
     pitch.draw(ax=ax)
 
-    # Create colormap and normalizer (using 'hot' or 'plasma' which work well on black)
+    # Create colormap and normaliser (using 'hot' or 'plasma' which work well on black)
     cmap = plt.cm.Reds
     norm = Normalize(vmin=0, vmax=max(counts) if counts else 1)
 
@@ -159,6 +160,7 @@ def plot_corner_heatmap(
 
     if out_file:
         plt.savefig(out_file)
+        plt.close()
 
 
 def plot_start_end_heatmaps(players, corner_group, all_zones, out_file=None):
@@ -187,6 +189,7 @@ def plot_start_end_heatmaps(players, corner_group, all_zones, out_file=None):
 
     if out_file:
         plt.savefig(out_file)
+        plt.close()
 
 
 role_colours = {
@@ -246,6 +249,7 @@ def plot_corner_paths(
 
     if out_file:
         plt.savefig(out_file)
+        plt.close()
 
 
 def plot_multiple_corner_paths(
@@ -279,6 +283,7 @@ def plot_multiple_corner_paths(
         plt.suptitle(title)
         if out_file_prefix:
             plt.savefig(f"{out_file_prefix}_page_{page + 1}.png")
+            plt.close()
 
 
 def plot_k_means_results(
@@ -339,6 +344,8 @@ def plot_k_means_results(
         )
 
     plt.savefig(out_file)
+    plt.close()
+    
     # Plot PCA scatter
     out_file = f"{out_dir}/{filename_prefix}corner_clusters_pca.png"
     plt.figure(figsize=(8, 6))
@@ -379,6 +386,7 @@ def plot_k_means_results(
     plt.ylabel("PCA Component 2")
     plt.legend()
     plt.savefig(out_file)
+    plt.close()
 
     # Plot individual corners per cluster
     out_file_prefix = "clustered_corners"
@@ -429,3 +437,4 @@ def plot_k_means_results(
         plt.savefig(
             f"{out_dir}/{filename_prefix}{out_file_prefix}_cluster_{cluster_id}.png"
         )
+        plt.close()
