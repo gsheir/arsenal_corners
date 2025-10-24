@@ -9,7 +9,7 @@ from scipy.spatial.distance import euclidean
 from sklearn.cluster import SpectralClustering
 from sklearn.metrics import silhouette_score
 
-from settings import OUTPUT_DIR, ROLE_WEIGHTS
+from tools.settings import OUTPUT_DIR, ROLE_WEIGHTS
 
 
 class CornerSimilarityClustering:

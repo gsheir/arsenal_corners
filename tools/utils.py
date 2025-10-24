@@ -1,4 +1,4 @@
-from settings import ALL_ZONES, MARKING, MIRRORED_CORNER_ZONES, ROLES
+from tools.settings import ALL_ZONES, MARKING, MIRRORED_CORNER_ZONES, ROLES
 
 
 def get_start_and_end_counts(players, corner_group):

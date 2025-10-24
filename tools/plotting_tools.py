@@ -4,9 +4,9 @@ import numpy as np
 from matplotlib.colors import Normalize
 from matplotlib.patches import Patch
 
-from role_aggregated_kmeans_clustering import RoleAggregatedKMeansClustering
-from settings import OUTPUT_DIR
-from utils import get_mean_play_quality_for_corner_ids, get_start_and_end_counts
+from clustering.role_aggregated_kmeans_clustering import RoleAggregatedKMeansClustering
+from tools.settings import OUTPUT_DIR
+from tools.utils import get_mean_play_quality_for_corner_ids, get_start_and_end_counts
 
 plt.ioff()
 
