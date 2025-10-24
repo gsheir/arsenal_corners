@@ -201,7 +201,6 @@ class RoleAggregatedKMeansClustering:
 
                 # Only create paths for roles that have players
                 if centroid[f"{role_clean}_count"] > 0.1:  # Threshold to avoid noise
-
                     # Get centroid coordinates
                     start_centroid_x = centroid[f"{role_clean}_start_centroid_x"]
                     start_centroid_y = centroid[f"{role_clean}_start_centroid_y"]

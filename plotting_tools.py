@@ -1,14 +1,12 @@
 import matplotlib.pyplot as plt
 import mplsoccer
 import numpy as np
-import pandas as pd
 from matplotlib.colors import Normalize
 from matplotlib.patches import Patch
 
 from role_aggregated_kmeans_clustering import RoleAggregatedKMeansClustering
 from settings import OUTPUT_DIR
-from utils import (get_mean_play_quality_for_corner_ids,
-                   get_start_and_end_counts)
+from utils import get_mean_play_quality_for_corner_ids, get_start_and_end_counts
 
 plt.ioff()
 
@@ -107,9 +105,9 @@ def plot_corner_heatmap(
 
     # Create figure
     if ax is None:
-        fig, ax = plt.subplots(figsize=(12, 8))
+        _, ax = plt.subplots(figsize=(12, 8))
     else:
-        fig = ax.figure
+        _ = ax.figure
 
     pitch = mplsoccer.VerticalPitch(
         pitch_type="statsbomb",
@@ -289,7 +287,6 @@ def plot_k_means_results(
     out_dir=OUTPUT_DIR,
     filename_prefix="",
 ):
-
     # Plot centroid paths using role aggregation reconstruction
     out_file = f"{out_dir}/{filename_prefix}clustered_corner_paths.png"
     fig, ax = plt.subplots(

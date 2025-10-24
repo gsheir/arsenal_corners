@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,8 +9,7 @@ from scipy.spatial.distance import euclidean
 from sklearn.cluster import SpectralClustering
 from sklearn.metrics import silhouette_score
 
-from settings import ALL_ZONES, OUTPUT_DIR, ROLE_WEIGHTS
-from utils import convert_zones_to_xy
+from settings import OUTPUT_DIR, ROLE_WEIGHTS
 
 
 class CornerSimilarityClustering:
@@ -492,7 +491,9 @@ class CornerSimilarityClustering:
                     consistency = (
                         "highly consistent"
                         if variance < 5
-                        else "moderately consistent" if variance < 10 else "variable"
+                        else "moderately consistent"
+                        if variance < 10
+                        else "variable"
                     )
 
                     print(f"  • {role} players ({pattern['count']} total):")
@@ -539,7 +540,6 @@ class CornerSimilarityClustering:
         cluster_order = np.argsort(self.cluster_labels)
         reordered_matrix = self.similarity_matrix[cluster_order][:, cluster_order]
         reordered_labels = self.cluster_labels[cluster_order]
-        reordered_ids = [self.corner_ids[i] for i in cluster_order]
 
         sns.heatmap(
             reordered_matrix,

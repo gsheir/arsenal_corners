@@ -1,21 +1,26 @@
 import os
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 
 from corner_similarity_clustering import CornerSimilarityClustering
 from kmeans_clustering import KMeansClustering
-from plotting_tools import (plot_corner_heatmap, plot_corner_paths,
-                            plot_corner_zones, plot_k_means_results,
-                            plot_multiple_corner_paths,
-                            plot_start_end_heatmaps)
+from plotting_tools import (
+    plot_corner_heatmap,
+    plot_corner_zones,
+    plot_k_means_results,
+    plot_multiple_corner_paths,
+    plot_start_end_heatmaps,
+)
 from role_aggregated_kmeans_clustering import RoleAggregatedKMeansClustering
 from settings import ALL_ZONES, CORNER_ZONES, OUT_CORNER_ZONES, OUTPUT_DIR
-from utils import (add_play_quality_to_players, convert_zones_to_xy,
-                   get_mean_play_quality_for_corner_ids,
-                   mirror_right_corners_for_corners,
-                   mirror_right_corners_for_players)
+from utils import (
+    add_play_quality_to_players,
+    convert_zones_to_xy,
+    get_mean_play_quality_for_corner_ids,
+    mirror_right_corners_for_corners,
+    mirror_right_corners_for_players,
+)
 
 
 def create_corner_zone_plot():
@@ -29,7 +34,7 @@ def create_left_right_heatmaps(corners):
     print("Creating left-right heatmaps...")
     left_corners = corners[corners["Side"] == "Left"]
     right_corners = corners[corners["Side"] == "Right"]
-    fig, ax = plt.subplots(ncols=2, figsize=(20, 8), constrained_layout=True)
+    _, ax = plt.subplots(ncols=2, figsize=(20, 8), constrained_layout=True)
 
     plot_corner_heatmap(
         left_corners.groupby("Target location")["Target location"]
